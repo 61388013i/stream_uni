@@ -2,12 +2,14 @@ import streamlit as st
 from google import genai
 from google.genai.errors import APIError
 import os
+import json 
 import time
 
 # --- 1. 配置與金鑰 (Key) ---
 # 警告：此金鑰將被部署到雲端，請務必了解其風險。
 GEMINI_API_KEY = "AIzaSyD_Cs5LftBQCwiwJG7xVjmP8Rfd46EMjJs"
 MODEL_NAME = "gemini-2.5-flash"              
+REQUEST_TIMEOUT = 90                         
 
 # --- 星座列表 ---
 CONSTELLATIONS = [
@@ -90,13 +92,13 @@ try:
         html_code = f.read()
 
     header_start = html_code.find('<body>')
-    input_start_marker = '<div style="height: 10px;"></div>' 
-    header_end = html_code.find('')
+    header_end_marker = ''
+    header_end = html_code.find(header_end_marker)
 
     # 顯示 Header 和 CSS
     st.markdown(html_code[header_start:header_end], unsafe_allow_html=True)
     
-    # 調整 Streamlit 內部元素樣式 (低飽和度配色)
+    # 調整 Streamlit 內部元素樣式 (覆蓋 Streamlit 預設樣式)
     st.markdown("""
     <style>
     /* 確保 Streamlit 容器使用 index.html 中的卡片樣式 */
@@ -123,16 +125,29 @@ try:
         border-radius: 999px;
         border: none;
         padding: 8px 14px;
+        height: 60px; /* 增加高度，讓換行文字有空間 */
     }
 
-    /* 2. 標籤文字顏色 (柔和的灰綠色) */
+    /* 2. 主題按鈕文字置中 */
+    /* 確保文字水平垂直居中 */
+    .stButton button > div {
+        display: flex;
+        justify-content: center; /* 水平置中 */
+        align-items: center;    /* 垂直置中 */
+        line-height: 1.2; 
+        height: 100%;
+        width: 100%;
+        text-align: center;
+    }
+
+    /* 3. 標籤文字顏色 (柔和的灰綠色) */
     .stTextArea label, .stSelectbox label {
         font-size: 0.9rem !important;
         color: #AEC2B6; 
         margin-bottom: 0.35rem;
     }
     
-    /* 3. Streamlit 輸入框和選單背景/文字顏色 */
+    /* 4. Streamlit 輸入框和選單背景/文字顏色 */
     div[data-testid="stSelectbox"] > div,
     div[data-testid="stTextArea"] > div > textarea {
         background-color: rgba(10, 10, 30, 0.85); /* 深色背景 */
@@ -197,11 +212,11 @@ if st.button("🔮 獲得今日解析", key="btn_horoscope_final"):
                 prompt = create_prompt(sign, current_topic_label, note)
                 client = genai.Client(api_key=GEMINI_API_KEY)
 
-                # 修正後的 API 呼叫：移除錯誤的 timeout 參數
+                # 修正後的 API 呼叫：使用預設參數，避免 TypeError 
                 response = client.models.generate_content(
                     model=MODEL_NAME,
                     contents=[{"role": "user", "parts": [{"text": prompt}]}],
-                    # 移除了 timeout 參數，使用預設值
+                    # 移除了所有 timeout 參數
                 )
                 
                 generated_text = response.text
