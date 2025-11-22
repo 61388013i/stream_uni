@@ -2,16 +2,14 @@ import streamlit as st
 from google import genai
 from google.genai.errors import APIError
 import os
-import json 
 import time
 
 # --- 1. 配置與金鑰 (Key) ---
 # 警告：此金鑰將被部署到雲端，請務必了解其風險。
 GEMINI_API_KEY = "AIzaSyD_Cs5LftBQCwiwJG7xVjmP8Rfd46EMjJs"
 MODEL_NAME = "gemini-2.5-flash"              
-REQUEST_TIMEOUT = 90                         
 
-# --- 星座列表 (從原 index.html 移植) ---
+# --- 星座列表 ---
 CONSTELLATIONS = [
     "牡羊座", "金牛座", "雙子座", "巨蟹座", "獅子座", 
     "處女座", "天秤座", "天蠍座", "射手座", "摩羯座", 
@@ -51,7 +49,7 @@ def create_prompt(constellation, topic, note):
 
 # --- 3. 主題偵測邏輯 ---
 def detect_topic(note):
-    """偵測使用者煩惱的關鍵主題，並回傳標籤 (love, work, etc.)。"""
+    """偵測使用者煩惱的關鍵主題。"""
     n = note.strip()
     if not n: return "other"
 
@@ -85,27 +83,22 @@ def set_topic_override(topic):
 
 # --- 讀取 HTML 樣式 (已修正路徑讀取方式) ---
 try:
-    # 修正後的讀取方式：確保 Streamlit 無論在哪裡運行都能找到它
     current_dir = os.path.dirname(__file__)
     file_path = os.path.join(current_dir, "index.html")
     
     with open(file_path, "r", encoding="utf-8") as f:
         html_code = f.read()
 
-    # 提取 HTML 中的樣式和基礎結構（用於背景和卡片樣式）
-    # 我們只需要從 <body> 開始到第一個輸入區塊前的所有樣式
     header_start = html_code.find('<body>')
+    input_start_marker = '<div style="height: 10px;"></div>' 
     header_end = html_code.find('')
 
     # 顯示 Header 和 CSS
     st.markdown(html_code[header_start:header_end], unsafe_allow_html=True)
     
-    # 調整 Streamlit 內部元素樣式 (覆蓋 Streamlit 預設樣式)
+    # 調整 Streamlit 內部元素樣式 (低飽和度配色)
     st.markdown("""
     <style>
-    /* ------------------------------------------- */
-    /* 低飽和度配色方案：柔和灰綠/霧面藍 */
-    /* ------------------------------------------- */
     /* 確保 Streamlit 容器使用 index.html 中的卡片樣式 */
     div[data-testid="stVerticalBlock"] {
         background: rgba(14, 14, 40, 0.92);
@@ -159,7 +152,7 @@ except Exception as e:
 
 # --- Streamlit Python 互動元素 ---
 
-# 1. 修正後的星座選擇框
+# 1. 星座選擇框
 sign = st.selectbox("你的星座", CONSTELLATIONS, index=0, key="sign_select")
 
 # 2. 煩惱輸入框
@@ -204,11 +197,12 @@ if st.button("🔮 獲得今日解析", key="btn_horoscope_final"):
                 prompt = create_prompt(sign, current_topic_label, note)
                 client = genai.Client(api_key=GEMINI_API_KEY)
 
-               response = client.models.generate_content(
-        model=MODEL_NAME,
-        contents=[{"role": "user", "parts": [{"text": prompt}]}],
-        config={"timeout": REQUEST_TIMEOUT} # <--- 修正：使用 config={"timeout": ...}
-    )
+                # 修正後的 API 呼叫：移除錯誤的 timeout 參數
+                response = client.models.generate_content(
+                    model=MODEL_NAME,
+                    contents=[{"role": "user", "parts": [{"text": prompt}]}],
+                    # 移除了 timeout 參數，使用預設值
+                )
                 
                 generated_text = response.text
                 
@@ -232,6 +226,3 @@ if st.button("🔮 獲得今日解析", key="btn_horoscope_final"):
 
 
 st.markdown('<div class="hint">※ 內容由 Gemini AI 模型生成，僅供參考。</div>', unsafe_allow_html=True)
-
-
-
