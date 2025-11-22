@@ -2,18 +2,32 @@ import streamlit as st
 from google import genai
 from google.genai.errors import APIError
 import os
-import json # 用于解析可能的 JSON 格式错误
+import json 
 
 # --- 1. 配置與金鑰 (Key) ---
-# 警告：此金鑰將被部署到雲端，请确保您明白风险。
 GEMINI_API_KEY = "AIzaSyD_Cs5LftBQCwiwJG7xVjmP8Rfd46EMjJs"
 MODEL_NAME = "gemini-2.5-flash"
 REQUEST_TIMEOUT = 90
 
-# --- 2. 核心 AI 提示詞函數 (與 app.py 相同) ---
+# --- 星座列表 ---
+CONSTELLATIONS = [
+    "牡羊座", "金牛座", "雙子座", "巨蟹座", "獅子座", 
+    "處女座", "天秤座", "天蠍座", "射手座", "摩羯座", 
+    "水瓶座", "雙魚座"
+]
+
+# --- 主題標籤 ---
+topic_labels = {
+    "love": "戀愛／關係",
+    "work": "工作／職場",
+    "study": "學業／考試",
+    "heal": "心情／療癒",
+    "other": "一般／綜合"
+}
+
+# (其餘函數和邏輯保持不變，因為它們是正確的)
 def create_prompt(constellation, topic, note):
-    """根據星座名稱、主題和備註建立結構化提示詞。"""
-    
+    # ... (使用您的核心提示詞邏輯) ...
     prompt_text = f"""
     你是一位中文占星專家，請嚴格按照以下要求生成報告：
 
@@ -32,9 +46,8 @@ def create_prompt(constellation, topic, note):
     """
     return prompt_text
 
-# --- 3. 主題偵測邏輯 (從 index.html 移植過來) ---
 def detect_topic(note):
-    """偵測使用者煩惱的關鍵主題，並回傳標籤 (love, work, etc.)。"""
+    # (使用您原有的主題偵測邏輯)
     n = note.strip()
     if not n: return "other"
 
@@ -50,64 +63,14 @@ def detect_topic(note):
     if check(study_keywords): return "study"
     if check(heal_keywords): return "heal"
     return "other"
+# (程式碼結束)
 
-topic_labels = {
-    "love": "戀愛／關係",
-    "work": "工作／職場",
-    "study": "學業／考試",
-    "heal": "心情／療癒",
-    "other": "一般／綜合"
-}
-
-# --- 4. Streamlit 介面與 API 呼叫 ---
+# --- 2. Streamlit 介面與 API 呼叫 (修正後的介面) ---
 st.set_page_config(
     page_title="星座占卜小宇宙",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
-
-# 使用 markdown/HTML 引入您的美觀 CSS
-st.markdown("""
-<style>
-/* 這是您原有的深色背景 CSS */
-body {
-    background: radial-gradient(circle at top, #1b1b3a 0%, #050510 55%, #000000 100%);
-    color: #f7f7ff;
-}
-.stApp {
-    background: radial-gradient(circle at top, #1b1b3a 0%, #050510 55%, #000000 100%);
-    color: #f7f7ff;
-}
-div[data-testid="stVerticalBlock"] {
-    background: rgba(14, 14, 40, 0.92);
-    border-radius: 24px;
-    padding: 24px 24px 28px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(18px);
-    border: 1px solid rgba(180, 180, 255, 0.25);
-}
-.stTextArea label, .stSelectbox label {
-    font-size: 0.9rem !important;
-    color: #b794ff;
-    margin-bottom: 0.35rem;
-}
-.stButton button {
-    background: linear-gradient(135deg, #b794ff, #7f5dff);
-    color: #050510;
-    font-weight: 600;
-    border-radius: 999px;
-    border: none;
-    padding: 8px 14px;
-}
-.stAlert {
-    border-radius: 12px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("<h1>星座占卜小宇宙</h1>", unsafe_allow_html=True)
-st.markdown('<div class="subtitle">今日運勢、提醒卡與三張牌，一次收齊 ✨ (Powered by Gemini)</div>', unsafe_allow_html=True)
 
 # 狀態儲存 (用於手動覆蓋主題)
 if 'topic_override' not in st.session_state:
@@ -116,19 +79,38 @@ if 'topic_override' not in st.session_state:
 def set_topic_override(topic):
     st.session_state['topic_override'] = topic
 
-# 表單元素
-sign = st.selectbox("你的星座", list(topic_labels.keys()), index=0)
+# 1. 嵌入 CSS 樣式 (保留您的深色主題)
+# 必須使用 HTML 組件來嵌入您複雜的 HTML/CSS
+with open("index.html", "r", encoding="utf-8") as f:
+    html_code = f.read()
+
+# 提取 HTML 中的樣式和基礎結構（我們只替換輸入區塊）
+header_start = html_code.find('<body>')
+header_end = html_code.find('')
+footer_start = html_code.find('') # 繼續找到下一個區塊的開頭
+footer_end = html_code.find('</script>') # 繼續找到腳本區塊的開頭
+
+# 這是我們需要用 Streamlit Python 元素替換的輸入區塊
+input_html = html_code[header_start:header_end] 
+
+# 顯示 header 和 CSS
+st.markdown(input_html, unsafe_allow_html=True)
+st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True) # 調整間距
+
+
+# --- Streamlit Python 互動元素 ---
+# 修正後的星座選擇框
+sign = st.selectbox("你的星座", CONSTELLATIONS, index=0, key="sign_select")
 
 note = st.text_area("想補充給宇宙知道的小事（AI 會參考這段內容）", 
                      placeholder="例如：最近在煩惱喜歡的人、報告、工作或只是覺得心很累。",
                      key="note_input")
 
-# 自動偵測主題
+# 自動偵測主題並顯示
 detected_topic = detect_topic(note)
 current_topic_key = st.session_state['topic_override'] if st.session_state['topic_override'] else detected_topic
 current_topic_label = topic_labels.get(current_topic_key, topic_labels['other'])
 
-# 顯示當前主題
 st.markdown(f"""
 <div style='font-size: 0.8rem; margin-top: -10px; margin-bottom: 10px; opacity: 0.8;'>
 目前主題：**{current_topic_label}** {'（手動選擇）' if st.session_state['topic_override'] else '（系統判定，可下面調整）'}
@@ -138,25 +120,26 @@ st.markdown(f"""
 # 手動覆蓋按鈕
 col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
-    st.button("戀愛／關係", on_click=set_topic_override, args=("love",), key="btn_love")
+    st.button(topic_labels['love'], on_click=set_topic_override, args=("love",), key="btn_love")
 with col2:
-    st.button("工作／職場", on_click=set_topic_override, args=("work",), key="btn_work")
+    st.button(topic_labels['work'], on_click=set_topic_override, args=("work",), key="btn_work")
 with col3:
-    st.button("學業／考試", on_click=set_topic_override, args=("study",), key="btn_study")
+    st.button(topic_labels['study'], on_click=set_topic_override, args=("study",), key="btn_study")
 with col4:
-    st.button("心情／療癒", on_click=set_topic_override, args=("heal",), key="btn_heal")
+    st.button(topic_labels['heal'], on_click=set_topic_override, args=("heal",), key="btn_heal")
 with col5:
-    st.button("一般／自由發揮", on_click=set_topic_override, args=("other",), key="btn_other")
+    st.button(topic_labels['other'], on_click=set_topic_override, args=("other",), key="btn_other")
 
 # 核心功能按鈕
 if st.button("🔮 獲得今日解析", key="btn_horoscope_final"):
     if not GEMINI_API_KEY or GEMINI_API_KEY == "YOUR_GEMINI_API_KEY_HERE":
-        st.error("🚨 錯誤：請在程式碼中填入有效的 GEMINI_API_KEY。")
+        st.error("🚨 錯誤：請在 st_app.py 中填入有效的 GEMINI_API_KEY。")
     else:
         with st.spinner(f"正在連線 Gemini AI... (主題: {current_topic_label})"):
             try:
-                prompt = create_prompt(sign, current_topic_label, note)
+                # 執行 API 呼叫邏輯
                 client = genai.Client(api_key=GEMINI_API_KEY)
+                prompt = create_prompt(sign, current_topic_label, note)
 
                 response = client.models.generate_content(
                     model=MODEL_NAME,
@@ -169,8 +152,9 @@ if st.button("🔮 獲得今日解析", key="btn_horoscope_final"):
                 final_output = f"【{sign}｜今日解析｜主題：{current_topic_label}】\n\n" + generated_text
                 
                 st.success("✅ 解析成功！")
+                st.markdown("---")
                 st.markdown(f"**🔎 解析結果**")
-                st.markdown(f"```markdown\n{final_output}\n```") # 使用 code block 呈現 markdown 格式
+                st.code(final_output, language='markdown') # 使用 code block 呈現 markdown 格式
                 
             except APIError as e:
                 st.error(f"🔴 Gemini API 服務錯誤: {e.status_code}")
