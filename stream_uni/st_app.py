@@ -204,10 +204,10 @@ if st.button("🔮 獲得今日解析", key="btn_horoscope_final"):
                 prompt = create_prompt(sign, current_topic_label, note)
                 client = genai.Client(api_key=GEMINI_API_KEY)
 
-                response = client.models.generate_content(
+               response = client.models.generate_content(
         model=MODEL_NAME,
         contents=[{"role": "user", "parts": [{"text": prompt}]}],
-        timeout=REQUEST_TIMEOUT
+        config={"timeout": REQUEST_TIMEOUT} # <--- 修正：使用 config={"timeout": ...}
     )
                 
                 generated_text = response.text
@@ -232,5 +232,6 @@ if st.button("🔮 獲得今日解析", key="btn_horoscope_final"):
 
 
 st.markdown('<div class="hint">※ 內容由 Gemini AI 模型生成，僅供參考。</div>', unsafe_allow_html=True)
+
 
 
