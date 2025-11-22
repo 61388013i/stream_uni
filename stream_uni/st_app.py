@@ -3,11 +3,10 @@ from google import genai
 from google.genai.errors import APIError
 import os
 import json 
-import time # 用於簡單的延遲控制，確保 UI 更新
+import time
 
 # --- 1. 配置與金鑰 (Key) ---
 # 警告：此金鑰將被部署到雲端，請務必了解其風險。
-# 最佳實踐：在 Streamlit Cloud 中，應將此金鑰作為 Secret 而非硬編碼。
 GEMINI_API_KEY = "AIzaSyD_Cs5LftBQCwiwJG7xVjmP8Rfd46EMjJs"
 MODEL_NAME = "gemini-2.5-flash"              
 REQUEST_TIMEOUT = 90                         
@@ -19,7 +18,7 @@ CONSTELLATIONS = [
     "水瓶座", "雙魚座"
 ]
 
-# --- 主題標籤 (從原 index.html 移植) ---
+# --- 主題標籤 ---
 topic_labels = {
     "love": "戀愛／關係",
     "work": "工作／職場",
@@ -96,8 +95,6 @@ try:
     # 提取 HTML 中的樣式和基礎結構（用於背景和卡片樣式）
     # 我們只需要從 <body> 開始到第一個輸入區塊前的所有樣式
     header_start = html_code.find('<body>')
-    # 找到第一個輸入區塊 (例如 <label for="sign">) 前的所有內容
-    input_start_marker = '<div style="height: 10px;"></div>' 
     header_end = html_code.find('')
 
     # 顯示 Header 和 CSS
@@ -106,6 +103,9 @@ try:
     # 調整 Streamlit 內部元素樣式 (覆蓋 Streamlit 預設樣式)
     st.markdown("""
     <style>
+    /* ------------------------------------------- */
+    /* 低飽和度配色方案：柔和灰綠/霧面藍 */
+    /* ------------------------------------------- */
     /* 確保 Streamlit 容器使用 index.html 中的卡片樣式 */
     div[data-testid="stVerticalBlock"] {
         background: rgba(14, 14, 40, 0.92);
@@ -121,6 +121,31 @@ try:
     }
     footer {visibility: hidden;}
     header {visibility: hidden;}
+
+    /* 1. 主要按鈕顏色 (柔和的藍綠色漸層) */
+    .stButton button {
+        background: linear-gradient(135deg, #A8DADC, #45A29E); 
+        color: #1a1a1a; 
+        font-weight: 600;
+        border-radius: 999px;
+        border: none;
+        padding: 8px 14px;
+    }
+
+    /* 2. 標籤文字顏色 (柔和的灰綠色) */
+    .stTextArea label, .stSelectbox label {
+        font-size: 0.9rem !important;
+        color: #AEC2B6; 
+        margin-bottom: 0.35rem;
+    }
+    
+    /* 3. Streamlit 輸入框和選單背景/文字顏色 */
+    div[data-testid="stSelectbox"] > div,
+    div[data-testid="stTextArea"] > div > textarea {
+        background-color: rgba(10, 10, 30, 0.85); /* 深色背景 */
+        color: #f7f7ff; /* 白色文字 */
+        border: 1px solid rgba(180, 180, 255, 0.25);
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -170,7 +195,6 @@ with col5:
 
 # 5. 核心功能按鈕與 API 呼叫
 if st.button("🔮 獲得今日解析", key="btn_horoscope_final"):
-    # 檢查 API 金鑰是否有效 (在雲端部署時，通常不需檢查 placeholder)
     if not GEMINI_API_KEY:
         st.error("🚨 錯誤：Gemini API Key 未設定。")
     else:
