@@ -18,16 +18,16 @@ CONSTELLATIONS = [
     "水瓶座", "雙魚座"
 ]
 
-# --- 主題標籤 (修正：刪除斜線並優化排版) ---
+# --- 主題標籤 (修正：刪除斜線) ---
 topic_labels = {
-    "love": "戀愛關係",   # 修正：刪除 '/'
-    "work": "工作職場",   # 修正：刪除 '/'
-    "study": "學業考試",  # 修正：刪除 '/'
-    "heal": "心情療癒",   # 修正：刪除 '/'
-    "other": "一般綜合"   # 修正：刪除 '/'
+    "love": "戀愛關係",
+    "work": "工作職場",
+    "study": "學業考試",
+    "heal": "心情療癒",
+    "other": "一般綜合"
 }
 
-# --- 2. 核心 AI 提示詞函數 (略) ---
+# --- 2. 核心 AI 提示詞函數 ---
 def create_prompt(constellation, topic, note):
     """根據星座名稱、主題和備註建立結構化提示詞。"""
     
@@ -49,7 +49,7 @@ def create_prompt(constellation, topic, note):
     """
     return prompt_text
 
-# --- 3. 主題偵測邏輯 (略) ---
+# --- 3. 主題偵測邏輯 ---
 def detect_topic(note):
     """偵測使用者煩惱的關鍵主題。"""
     n = note.strip()
@@ -125,20 +125,20 @@ try:
         border-radius: 999px;
         border: none;
         padding: 8px 14px;
-        height: 55px; /* 調整高度 */
-        max-width: 140px; /* 增加最大寬度，讓文字不至於被切斷 */
+        height: 55px; 
+        max-width: 140px; 
     }
 
     /* 2. 主題按鈕文字置中 (優化排版) */
     .stButton button > div {
         display: flex;
-        flex-direction: column; /* 允許文字換行後，內容垂直堆疊 */
-        justify-content: center; /* 垂直置中 */
-        align-items: center;    /* 水平置中 */
+        flex-direction: column; 
+        justify-content: center; 
+        align-items: center;    
         line-height: 1.2; 
         height: 100%;
         width: 100%;
-        text-align: center; /* 確保文字本身居中 */
+        text-align: center; 
     }
 
     /* 3. 標籤文字顏色 (柔和的灰綠色) */
@@ -151,8 +151,8 @@ try:
     /* 4. Streamlit 輸入框和選單背景/文字顏色 */
     div[data-testid="stSelectbox"] > div,
     div[data-testid="stTextArea"] > div > textarea {
-        background-color: rgba(10, 10, 30, 0.85); /* 深色背景 */
-        color: #f7f7ff; /* 白色文字 */
+        background-color: rgba(10, 10, 30, 0.85); 
+        color: #f7f7ff; 
         border: 1px solid rgba(180, 180, 255, 0.25);
     }
     </style>
@@ -213,23 +213,29 @@ if st.button("🔮 獲得今日解析", key="btn_horoscope_final"):
                 prompt = create_prompt(sign, current_topic_label, note)
                 client = genai.Client(api_key=GEMINI_API_KEY)
 
-                # 修正後的 API 呼叫：移除錯誤的 timeout 參數，使用預設值
+                # 修正後的 API 呼叫：使用預設參數，避免 TypeError 
                 response = client.models.generate_content(
                     model=MODEL_NAME,
                     contents=[{"role": "user", "parts": [{"text": prompt}]}],
+                    # 移除了所有 timeout 參數
                 )
                 
                 generated_text = response.text
                 
-                final_output = f"【{sign}｜今日解析｜主題：{current_topic_label}】\n\n" + generated_text
+                # --- 結果排版修正 ---
+                # 1. 移除 AI 輸出中多餘的雙星號，讓排版更乾淨
+                cleaned_output = generated_text.replace('**', '')
+
+                # 增加主題作為開頭 (與原輸出格式保持一致)
+                final_display = f"【{sign}｜今日解析｜主題：{current_topic_label}】\n\n{cleaned_output}"
                 
                 # 顯示結果
                 st.success("✅ 解析成功！")
                 st.markdown("---")
                 st.markdown(f"**🔎 解析結果**")
                 
-                # 將輸出顯示在一個美觀的代碼塊中，保留 Markdown 格式
-                st.code(final_output, language='markdown') 
+                # 2. 直接使用 st.markdown 渲染，讓文字能自然換行並佔滿螢幕寬度 (不產生滾動條)
+                st.markdown(final_display) 
                 
             except APIError as e:
                 st.error(f"🔴 Gemini API 服務錯誤: {e.status_code}")
