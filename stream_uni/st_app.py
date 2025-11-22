@@ -18,16 +18,16 @@ CONSTELLATIONS = [
     "水瓶座", "雙魚座"
 ]
 
-# --- 主題標籤 ---
+# --- 主題標籤 (修正：刪除斜線並優化排版) ---
 topic_labels = {
-    "love": "戀愛／關係",
-    "work": "工作／職場",
-    "study": "學業／考試",
-    "heal": "心情／療癒",
-    "other": "一般／綜合"
+    "love": "戀愛關係",   # 修正：刪除 '/'
+    "work": "工作職場",   # 修正：刪除 '/'
+    "study": "學業考試",  # 修正：刪除 '/'
+    "heal": "心情療癒",   # 修正：刪除 '/'
+    "other": "一般綜合"   # 修正：刪除 '/'
 }
 
-# --- 2. 核心 AI 提示詞函數 ---
+# --- 2. 核心 AI 提示詞函數 (略) ---
 def create_prompt(constellation, topic, note):
     """根據星座名稱、主題和備註建立結構化提示詞。"""
     
@@ -49,7 +49,7 @@ def create_prompt(constellation, topic, note):
     """
     return prompt_text
 
-# --- 3. 主題偵測邏輯 ---
+# --- 3. 主題偵測邏輯 (略) ---
 def detect_topic(note):
     """偵測使用者煩惱的關鍵主題。"""
     n = note.strip()
@@ -125,19 +125,20 @@ try:
         border-radius: 999px;
         border: none;
         padding: 8px 14px;
-        height: 60px; /* 增加高度，讓換行文字有空間 */
+        height: 55px; /* 調整高度 */
+        max-width: 140px; /* 增加最大寬度，讓文字不至於被切斷 */
     }
 
-    /* 2. 主題按鈕文字置中 */
-    /* 確保文字水平垂直居中 */
+    /* 2. 主題按鈕文字置中 (優化排版) */
     .stButton button > div {
         display: flex;
-        justify-content: center; /* 水平置中 */
-        align-items: center;    /* 垂直置中 */
+        flex-direction: column; /* 允許文字換行後，內容垂直堆疊 */
+        justify-content: center; /* 垂直置中 */
+        align-items: center;    /* 水平置中 */
         line-height: 1.2; 
         height: 100%;
         width: 100%;
-        text-align: center;
+        text-align: center; /* 確保文字本身居中 */
     }
 
     /* 3. 標籤文字顏色 (柔和的灰綠色) */
@@ -212,11 +213,10 @@ if st.button("🔮 獲得今日解析", key="btn_horoscope_final"):
                 prompt = create_prompt(sign, current_topic_label, note)
                 client = genai.Client(api_key=GEMINI_API_KEY)
 
-                # 修正後的 API 呼叫：使用預設參數，避免 TypeError 
+                # 修正後的 API 呼叫：移除錯誤的 timeout 參數，使用預設值
                 response = client.models.generate_content(
                     model=MODEL_NAME,
                     contents=[{"role": "user", "parts": [{"text": prompt}]}],
-                    # 移除了所有 timeout 參數
                 )
                 
                 generated_text = response.text
