@@ -1,17 +1,107 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    </head>
+  <meta charset="UTF-8" />
+  <title>星座占卜小宇宙｜今日運勢・提醒卡與三張牌</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta name="description" content="線上星座占卜小工具：輸入星座與想問的煩惱，AI 自動判斷主題，生成今日運勢、建議與幸運元素。">
+  <meta name="keywords" content="星座占卜, 今日運勢, 抽牌, 戀愛占卜, 工作占卜, 學業占卜, 心情占卜, Gemini API">
+
+    <meta property="og:title" content="星座占卜小宇宙｜今日運勢・提醒卡與三張牌">
+  <meta property="og:description" content="輸入星座與煩惱，小宇宙幫你判斷主題，抽出對應的運勢與提醒卡。">
+  <meta property="og:type" content="website">
+
+  <style>
+    /* ------------------------------------------- */
+    /* 您的所有 CSS 樣式都放在這裡，以確保 Streamlit 嵌入時能讀取到背景和卡片樣式 */
+    /* ------------------------------------------- */
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at top, #1b1b3a 0%, #050510 55%, #000000 100%);
+      color: #f7f7ff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: rgba(14, 14, 40, 0.92);
+      border-radius: 24px;
+      padding: 24px 24px 28px;
+      max-width: 520px;
+      width: 92%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(180, 180, 255, 0.25);
+    }
+    /* 為了 Streamlit 嵌入，將標題和副標題設為類別 */
+    .main-title {
+      font-size: 1.5rem;
+      margin-top: 0;
+      margin-bottom: 0.25rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .subtitle {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-bottom: 1.1rem;
+    }
+    /* [Streamlit 會使用的元素樣式 - 確保它們有基本樣式] */
+    label {
+      font-size: 0.9rem;
+      display: block;
+      margin-bottom: 0.35rem;
+    }
+    select, textarea {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 8px 10px;
+      font-size: 0.95rem;
+      margin-bottom: 0.9rem;
+      background: rgba(10, 10, 30, 0.85);
+      color: #f7f7ff;
+      outline: none;
+    }
+    /* ------------------------------------------- */
+    /* 省略其他不影響主要結構的詳細 CSS，因為 Streamlit 會覆蓋大部分互動元素 */
+    /* ------------------------------------------- */
+    .pill-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .pill {
+      font-size: 0.78rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.2);
+      opacity: 0.8;
+    }
+    /* 為了 Streamlit 介面調整的間距 */
+    .stSelectbox, .stTextArea { margin-bottom: 0.2rem !important; }
+
+  </style>
+</head>
 <body>
-    <div class="card">
-        <h1>星座占卜小宇宙</h1>
-        <div class="subtitle">今日運勢、提醒卡與三張牌，一次收齊 ✨ (Powered by Gemini)</div>
-        
-        <p>此頁面為 Streamlit 部署專用，所有輸入和輸出將由 Streamlit Python 程式碼控制。</p>
-        
-        <script>
-            // 保持此腳本區塊空白
-        </script>
-    </div>
+  <div class="card">
+        <h1 class="main-title">星座占卜小宇宙</h1>
+    <div class="subtitle">今日運勢、提醒卡與三張牌，一次收齊 ✨ (Powered by Gemini)</div>
+
+    <div class="pill-row">
+      <div class="pill">雲端 API 連線</div>
+      <div class="pill">需 API Key</div>
+      <div class="pill">主題偵測：戀愛 / 工作 / 學業 / 心情</div>
+    </div>
+
+    <div style="height: 10px;"></div> 
+    
+      </div>
 </body>
 </html>
+
