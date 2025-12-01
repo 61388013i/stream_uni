@@ -6,8 +6,16 @@ import json
 import time
 
 # --- 1. 配置與金鑰 (Key) ---
-# 警告：此金鑰將被部署到雲端，請務必了解其風險。
-GEMINI_API_KEY = "AIzaSyD_Cs5LftBQCwiwJG7xVjmP8Rfd46EMjJs"
+
+# !!! 關鍵修正：從 Streamlit Secrets 中安全地讀取金鑰 !!!
+try:
+    # 程式碼會在這裡尋找您在 Streamlit Secrets 中設置的 GEMINI_API_KEY
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+except KeyError:
+    st.error("🚨 錯誤：Gemini API Key 未在 Streamlit Secrets 中設置。請檢查您的 Secrets 檔案。")
+    st.stop()
+# ----------------------------------------------------
+
 MODEL_NAME = "gemini-2.5-flash"              
 REQUEST_TIMEOUT = 90                         
 
@@ -204,8 +212,9 @@ with col5:
 
 # 5. 核心功能按鈕與 API 呼叫
 if st.button("🔮 獲得今日解析", key="btn_horoscope_final"):
+    # 檢查 API 金鑰是否被載入
     if not GEMINI_API_KEY:
-        st.error("🚨 錯誤：Gemini API Key 未設定。")
+        st.error("🚨 錯誤：Gemini API Key 未被 Streamlit Secrets 成功載入。")
     else:
         with st.spinner(f"正在連線 Gemini AI... (主題: {current_topic_label})"):
             try:
@@ -213,20 +222,19 @@ if st.button("🔮 獲得今日解析", key="btn_horoscope_final"):
                 prompt = create_prompt(sign, current_topic_label, note)
                 client = genai.Client(api_key=GEMINI_API_KEY)
 
-                # 修正後的 API 呼叫：使用預設參數，避免 TypeError 
+                # API 呼叫已修正為正確的語法
                 response = client.models.generate_content(
                     model=MODEL_NAME,
                     contents=[{"role": "user", "parts": [{"text": prompt}]}],
-                    # 移除了所有 timeout 參數
                 )
                 
                 generated_text = response.text
                 
-                # --- 結果排版修正 ---
-                # 1. 移除 AI 輸出中多餘的雙星號，讓排版更乾淨
+                # --- 結果排版修正：使用 st.markdown 並清理格式 ---
+                # 移除 AI 輸出中多餘的雙星號，讓排版更乾淨
                 cleaned_output = generated_text.replace('**', '')
 
-                # 增加主題作為開頭 (與原輸出格式保持一致)
+                # 增加主題作為開頭
                 final_display = f"【{sign}｜今日解析｜主題：{current_topic_label}】\n\n{cleaned_output}"
                 
                 # 顯示結果
@@ -234,7 +242,7 @@ if st.button("🔮 獲得今日解析", key="btn_horoscope_final"):
                 st.markdown("---")
                 st.markdown(f"**🔎 解析結果**")
                 
-                # 2. 直接使用 st.markdown 渲染，讓文字能自然換行並佔滿螢幕寬度 (不產生滾動條)
+                # 直接使用 st.markdown 渲染，讓文字能自然換行並佔滿螢幕寬度 (不產生滾動條)
                 st.markdown(final_display) 
                 
             except APIError as e:
@@ -247,3 +255,4 @@ if st.button("🔮 獲得今日解析", key="btn_horoscope_final"):
 
 
 st.markdown('<div class="hint">※ 內容由 Gemini AI 模型生成，僅供參考。</div>', unsafe_allow_html=True)
+
